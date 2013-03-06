@@ -78,7 +78,10 @@ class FacebookFacade extends Nette\Object
 
 	/**
 	 * API:
+	 * - $this->getProfilePictureUrl() -> gets square profile picture of currently logged in user
+	 * - $this->getProfilePictureUrl('square') -> same as above
 	 * - $this->getProfilePictureUrl('[fbID]')
+	 * - $this->getProfilePictureUrl(40, 40) -> gets 40×40 profile picture of currently logged in user
 	 * - $this->getProfilePictureUrl('[fbID]', 'square')
 	 * - $this->getProfilePictureUrl('[fbID]', 40, 40)
 	 *
@@ -87,18 +90,55 @@ class FacebookFacade extends Nette\Object
 	 * @param  int
 	 * @return string
 	 */
-	function getProfilePictureUrl($fbID, $type = 'square', $height = NULL)
+	function getProfilePictureUrl($fbID = NULL, $type = 'square', $height = NULL)
 	{
-		$url = "https://graph.facebook.com/$fbID/picture?";
+		switch (func_num_args()) {
+			case 0: // square image of logged user
+				$user = $this->getUser();
+				$fbID = $user['id'];
+				$query = "type=$type";
 
-		if ($height === NULL) {
-			$url .= "type=$type";
+				break;
 
-		} else {
-			$url .= "width=$type&height=$height";
+			case 1:
+				if (is_string($fbID)) {
+					if (is_numeric($fbID)) { // square image of user [fbID]
+						$query = "type=$type";
+
+					} else { // $type image of logged user
+						$query = "type=$fbID";
+
+						$user = $this->getUser();
+						$fbID = $user['id'];
+					}
+
+				} else {
+					throw new \InvalidArgumentException;
+				}
+
+				break;
+
+			case 2:
+				if (is_int($fbID) && is_int($type)) {
+					$query = "width=$fbID&height=$type";
+					$user = $this->getUser();
+					$fbID = $user['id'];
+
+				} elseif (is_string($fbID) && is_string($type)) {
+					$query = "type=$type";
+
+				} else {
+					throw new \InvalidArgumentException;
+				}
+
+				break;
+
+			default:
+				$query .= "width=$type&height=$height";
+				break;
 		}
 
-		return $url;
+		return "https://graph.facebook.com/$fbID/picture?" . $query;
 	}
 
 
