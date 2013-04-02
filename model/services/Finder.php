@@ -67,7 +67,7 @@ class Finder extends NFinder implements \Countable
 	function orderByType($desc = FALSE)
 	{
 		$this->orders[] = function (SplFileInfo $a, SplFileInfo $b) use ($desc) {
-			return strcasecmp( $a->getExtension(), $b->getExtension() ) * ($desc ? -1 : 1); die();
+			return strcasecmp( $a->getExtension(), $b->getExtension() ) * ($desc ? -1 : 1);
 		};
 
 		return $this;

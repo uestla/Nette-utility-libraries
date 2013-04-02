@@ -7,6 +7,8 @@ use Facebook;
 use BaseFacebook;
 use Nette\Utils\Arrays;
 use ReflectionException;
+use Nette\Caching\Cache;
+use Nette\Caching\IStorage;
 
 
 /**
@@ -29,21 +31,28 @@ use ReflectionException;
  */
 class FacebookFacade extends Nette\Object
 {
+
 	/** @var Facebook */
 	protected $fb;
+
+	/** @var Cache */
+	protected $cache;
 
 
 
 	/**
 	 * @param  int
 	 * @param  string
+	 * @param  IStorage
 	 */
-	function __construct($appID, $secret)
+	function __construct($appID, $secret, IStorage $storage)
 	{
 		$this->fb = new Facebook(array(
 			'appId' => $appID,
 			'secret' => $secret,
 		));
+
+		$this->cache = new Cache($storage, __CLASS__);
 	}
 
 
@@ -138,7 +147,40 @@ class FacebookFacade extends Nette\Object
 				break;
 		}
 
-		return "https://graph.facebook.com/$fbID/picture?" . $query;
+
+		return $this->loadProfilePicture("https://graph.facebook.com/$fbID/picture", $query);
+	}
+
+
+
+	/**
+	 * @param  string
+	 * @param  string
+	 * @return string
+	 */
+	protected function loadProfilePicture($url, $query)
+	{
+		$key = func_get_args();
+		$img = $this->cache->load($key);
+		if ($img === NULL) {
+			$context = stream_context_create(array(
+				'http' => array(
+					'method' => 'GET',
+					'header' => 'Content-type: application/x-www-form-urlencoded',
+					'content' => $query,
+				),
+			));
+
+			$fp = fopen($url, 'r', FALSE, $context);
+			$content = stream_get_contents($fp);
+			fclose($fp);
+
+			$img = $this->cache->save($key, $content, array(
+				Cache::EXPIRE => '+ 1 hour',
+			));
+		}
+
+		return Nette\Templating\Helpers::dataStream($img);
 	}
 
 
@@ -159,4 +201,5 @@ class FacebookFacade extends Nette\Object
 			return parent::__call($name, $args);
 		}
 	}
+
 }
