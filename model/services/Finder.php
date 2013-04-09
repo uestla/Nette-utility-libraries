@@ -144,6 +144,7 @@ class Finder extends Nette\Object implements \Countable
 			$this->loadFiles();
 			$iterator = new ArrayIterator($this->files);
 			$iterator->uasort($this->getSortCallback());
+			return $iterator;
 		}
 
 		return $this->finder->getIterator();
