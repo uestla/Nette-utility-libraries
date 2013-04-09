@@ -7,8 +7,6 @@ use Facebook;
 use BaseFacebook;
 use Nette\Utils\Arrays;
 use ReflectionException;
-use Nette\Caching\Cache;
-use Nette\Caching\IStorage;
 
 
 /**
