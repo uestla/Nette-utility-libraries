@@ -10,6 +10,16 @@ use ArrayIterator;
 use Nette\Utils\Finder as NFinder;
 
 
+/**
+ * @method Finder in(string|array $path)
+ * @method Finder from(string|array $path)
+ * @method Finder childFirst()
+ * @method Finder exclude(mixed $mask)
+ * @method Finder filter(callable $callback)
+ * @method Finder limitDepth(int $depth)
+ * @method Finder size(string $operator, int $size = NULL)
+ * @method Finder date(string $operator, mixed $date = NULL)
+ */
 class Finder extends Nette\Object implements \Countable
 {
 
