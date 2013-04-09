@@ -155,9 +155,9 @@ class FacebookFacade extends Nette\Object
 	function __call($name, $args)
 	{
 		try {
-			return Nette\Reflection\Method::from( $this->fb, $name )->invokeArgs( $this->fb, $args );
+			return callback($this->fb, $name)->invokeArgs($args);
 
-		} catch (ReflectionException $e) { // method does not exist
+		} catch (Nette\InvalidArgumentException $e) {
 			return parent::__call($name, $args);
 		}
 	}
