@@ -20,21 +20,24 @@ use Nette\Utils\Finder as NFinder;
  * @method Finder size(string $operator, int $size = NULL)
  * @method Finder date(string $operator, mixed $date = NULL)
  */
-class Finder extends Nette\Object implements \Countable
+class Finder extends Nette\Object implements \Countable, \IteratorAggregate
 {
 
 	/** @var NFinder */
-	protected $finder;
+	private $finder;
 
 	/** @var Closure[] */
-	protected $orders = array();
+	private $orders = array();
 
 	/** @var SplFileInfo[] */
-	protected $files = NULL;
+	private $files = NULL;
+
+	const SORT_ASC = FALSE;
+	const SORT_DESC = TRUE;
 
 
 
-	/** @param  NFinder */
+	/** @param  NFinder $finder */
 	function __construct(NFinder $finder)
 	{
 		$this->finder = $finder;
@@ -43,7 +46,7 @@ class Finder extends Nette\Object implements \Countable
 
 
 	/**
-	 * @param  Closure|Nette\Callback
+	 * @param  Closure|Nette\Callback $callback
 	 * @return Finder provides fluent interface
 	 */
 	function order($callback)
@@ -56,13 +59,13 @@ class Finder extends Nette\Object implements \Countable
 
 
 	/**
-	 * @param  bool order in descending order?
+	 * @param  bool $dir order in descending order?
 	 * @return Finder provides fluent interface
 	 */
-	function orderByName($desc = FALSE)
+	function orderByName($dir = self::SORT_ASC)
 	{
-		$this->order(function (SplFileInfo $a, SplFileInfo $b) use ($desc) {
-			return strcasecmp($a->getFilename(), $b->getFilename()) * ($desc ? -1 : 1);
+		$this->order(function (SplFileInfo $a, SplFileInfo $b) use ($dir) {
+			return strcasecmp($a->getFilename(), $b->getFilename()) * ($dir ? -1 : 1);
 		});
 
 		return $this;
@@ -71,13 +74,13 @@ class Finder extends Nette\Object implements \Countable
 
 
 	/**
-	 * @param  bool order in descending order?
+	 * @param  bool $dir order in descending order?
 	 * @return Finder provides fluent interface
 	 */
-	function orderBySize($desc = FALSE)
+	function orderBySize($dir = self::SORT_ASC)
 	{
-		$this->order(function (SplFileInfo $a, SplFileInfo $b) use ($desc) {
-			return ($a->getSize() - $b->getSize()) * ($desc ? -1 : 1);
+		$this->order(function (SplFileInfo $a, SplFileInfo $b) use ($dir) {
+			return ($a->getSize() - $b->getSize()) * ($dir ? -1 : 1);
 		});
 
 		return $this;
@@ -86,13 +89,13 @@ class Finder extends Nette\Object implements \Countable
 
 
 	/**
-	 * @param  bool order in descending order?
+	 * @param  bool $dir order in descending order?
 	 * @return Finder provides fluent interface
 	 */
-	function orderByType($desc = FALSE)
+	function orderByType($dir = self::SORT_ASC)
 	{
-		$this->order(function (SplFileInfo $a, SplFileInfo $b) use ($desc) {
-			return strcasecmp($a->getExtension(), $b->getExtension()) * ($desc ? -1 : 1);
+		$this->order(function (SplFileInfo $a, SplFileInfo $b) use ($dir) {
+			return strcasecmp($a->getExtension(), $b->getExtension()) * ($dir ? -1 : 1);
 		});
 
 		return $this;
@@ -101,13 +104,13 @@ class Finder extends Nette\Object implements \Countable
 
 
 	/**
-	 * @param  bool order in descending order?
+	 * @param  bool $dir order in descending order?
 	 * @return Finder provides fluent interface
 	 */
-	function orderByMTime($desc = FALSE)
+	function orderByMTime($dir = self::SORT_ASC)
 	{
-		$this->order(function (SplFileInfo $a, SplFileInfo $b) use ($desc) {
-			return ($a->getMTime() - $b->getMTime()) * ($desc ? -1 : 1);
+		$this->order(function (SplFileInfo $a, SplFileInfo $b) use ($dir) {
+			return ($a->getMTime() - $b->getMTime()) * ($dir ? -1 : 1);
 		});
 
 		return $this;
@@ -149,7 +152,7 @@ class Finder extends Nette\Object implements \Countable
 	/** @return Iterator */
 	function getIterator()
 	{
-		if ($this->orders !== NULL) {
+		if (count($this->orders)) {
 			$this->loadFiles();
 			$iterator = new ArrayIterator($this->files);
 			$iterator->uasort($this->getSortCallback());
@@ -164,7 +167,7 @@ class Finder extends Nette\Object implements \Countable
 	/** @return array */
 	function toArray()
 	{
-		return @iterator_to_array( $this->getIterator() ); // intentionally @ due to PHP bug #50688
+		return @iterator_to_array($this->getIterator()); // intentionally @ due to PHP bug #50688
 	}
 
 
@@ -197,8 +200,8 @@ class Finder extends Nette\Object implements \Countable
 
 
 	/**
-	 * @param  string
-	 * @param  array
+	 * @param  string $name
+	 * @param  array $args
 	 * @return mixed
 	 */
 	function __call($name, $args)
@@ -216,8 +219,8 @@ class Finder extends Nette\Object implements \Countable
 
 
 	/**
-	 * @param  string
-	 * @param  array
+	 * @param  string $name
+	 * @param  array $args
 	 * @return mixed
 	 */
 	static function __callStatic($name, $args)
