@@ -6,7 +6,7 @@ use Nette;
 use Facebook;
 use BaseFacebook;
 use Nette\Utils\Arrays;
-use ReflectionException;
+use Nette\Utils\Callback as NCallback;
 
 
 /**
@@ -31,13 +31,13 @@ class FacebookFacade extends Nette\Object
 {
 
 	/** @var Facebook */
-	protected $fb;
+	private $fb;
 
 
 
 	/**
-	 * @param  int
-	 * @param  string
+	 * @param  int $appID
+	 * @param  string $secret
 	 */
 	function __construct($appID, $secret)
 	{
@@ -50,7 +50,7 @@ class FacebookFacade extends Nette\Object
 
 
 	/**
-	 * @param  string|NULL
+	 * @param  string $fbID
 	 * @return array|NULL
 	 */
 	function getUser($fbID = NULL)
@@ -78,6 +78,17 @@ class FacebookFacade extends Nette\Object
 
 
 	/**
+	 * @param  string $id
+	 * @return string
+	 */
+	function getProfileUrl($id)
+	{
+		return 'http://facebook.com/profile.php?id=' . $id;
+	}
+
+
+
+	/**
 	 * API:
 	 * - $this->getProfilePictureUrl() -> gets square profile picture of currently logged in user
 	 * - $this->getProfilePictureUrl('square') -> same as above
@@ -86,9 +97,9 @@ class FacebookFacade extends Nette\Object
 	 * - $this->getProfilePictureUrl('[fbID]', 'square')
 	 * - $this->getProfilePictureUrl('[fbID]', 40, 40)
 	 *
-	 * @param  string
-	 * @param  string|int
-	 * @param  int
+	 * @param  string $fbID
+	 * @param  string|int $type
+	 * @param  int $height
 	 * @return string
 	 */
 	function getProfilePictureUrl($fbID = NULL, $type = 'square', $height = NULL)
@@ -148,14 +159,14 @@ class FacebookFacade extends Nette\Object
 	/**
 	 * Calls internal facebook SDK task
 	 *
-	 * @param  string
-	 * @param  array
+	 * @param  string $name
+	 * @param  array $args
 	 * @return mixed
 	 */
 	function __call($name, $args)
 	{
 		try {
-			return callback($this->fb, $name)->invokeArgs($args);
+			return NCallback::invokeArgs(array($this->fb, $name), $args);
 
 		} catch (Nette\InvalidArgumentException $e) {
 			return parent::__call($name, $args);
